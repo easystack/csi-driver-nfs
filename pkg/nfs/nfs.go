@@ -70,6 +70,8 @@ const (
 	pvcNameMetadata       = "${pvc.metadata.name}"
 	pvcNamespaceMetadata  = "${pvc.metadata.namespace}"
 	pvNameMetadata        = "${pv.metadata.name}"
+	directVolume          = "directvolume"
+	fsType                = "nfs"
 )
 
 func NewDriver(options *DriverOptions) *Driver {
