@@ -30,6 +30,8 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/volume"
 	mount "k8s.io/mount-utils"
+
+	"github.com/kubernetes-csi/csi-driver-nfs/pkg/utils"
 )
 
 // NodeServer driver
@@ -86,7 +88,16 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 					return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid mountPermissions %s", v))
 				}
 			}
+		case directVolume:
+			subDirReplaceMap[directVolume] = v
 		}
+	}
+
+	if subDirReplaceMap[directVolume] == "true" {
+		if err := utils.AddDirectVolume(targetPath, server, baseDir, fsType); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		return &csi.NodePublishVolumeResponse{}, nil
 	}
 
 	if server == "" {
@@ -156,6 +167,9 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 	klog.V(2).Infof("NodeUnpublishVolume: unmounting volume %s on %s", volumeID, targetPath)
 	var err error
+	if err = utils.Remove(targetPath); err != nil {
+		klog.V(2).ErrorS(err, "NodeUnpublishVolume Error: unmounting volume %s on %s", volumeID, targetPath)
+	}
 	extensiveMountPointCheck := true
 	forceUnmounter, ok := ns.mounter.(mount.MounterForceUnmounter)
 	if ok {

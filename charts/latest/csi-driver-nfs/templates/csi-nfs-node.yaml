@@ -16,7 +16,7 @@ spec:
   template:
     metadata:
 {{ include "nfs.labels" . | indent 6 }}
-        app: {{ .Values.node.name }}
+      app: {{ .Values.node.name }}
     spec:
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -125,6 +125,8 @@ spec:
             - name: pods-mount-dir
               mountPath: {{ .Values.kubeletDir }}/pods
               mountPropagation: "Bidirectional"
+            - name: kata-containers
+              mountPath: /run/kata-containers/shared/direct-volumes/
             {{- if .Values.feature.propagateHostMountOptions }}
             - name: host-nfsmount-conf
               mountPath: /etc/nfsmount.conf
@@ -140,6 +142,10 @@ spec:
         - name: pods-mount-dir
           hostPath:
             path: {{ .Values.kubeletDir }}/pods
+            type: Directory
+        - name: kata-containers
+          hostPath:
+            path: /run/kata-containers/shared/direct-volumes/
             type: Directory
         - hostPath:
             path: {{ .Values.kubeletDir }}/plugins_registry
